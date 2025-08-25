@@ -20,4 +20,25 @@ router.post("/register", async (req, res) => {
     res.json({message:"Usuário registrado com sucesso"});
 });
 
+router.post("/login", async (req, res) => {
+    const {username, password} = req.body;
+
+    const user = users.find((u) => u.username === username);
+    if (!user) {
+        return res.status(400).json({message:"Usuário não encontrado"});
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+        return res.status(400).json({message:"Senha inválida"});
+    }
+
+    const token = jwt.sign({username}, "secreta123", {expiresIn:"1h"});
+    res.json({token});
+
+    router.get("/profile", authMiddleware, (req, res) => {
+        res.json({message:`Bem-vindo ${req.user.username}`});
+    });
+});
+
 export default router;
